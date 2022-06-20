@@ -103,7 +103,6 @@ app.route("/todo/:activityName")
 
     // Atualiza uma atividade específica
     .patch(function(req, res) {
-        console.table(req.body)
         Activity.updateOne(
             { activity_title: req.params.activityName },
             { $set: req.body },
