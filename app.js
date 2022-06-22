@@ -148,8 +148,10 @@ app.route("/todo/:activityName")
 
 /** End ----------- To Do Enpoints */
 
+
 /** User endpoints */
-app.route("/user")
+app.route("/register")
+
     .post(function(req, res) {
         const newUser = new User({
             username: req.body.username,
@@ -172,6 +174,36 @@ app.route("/user")
             }
         })
 
+    });
+
+app.route("/login")
+    .post(function(req, res) {
+        const username = req.body.username;
+        const user_password = req.body.user_password;
+
+        User.findOne(
+            { username: username },
+            function(err, result) {
+                if(result && !err) {
+                    if(result.username && (result.user_password === user_password)) {
+                        res.send({
+                            message: "Logado com sucesso!"
+                        })
+                        
+                    }
+                    else {
+                        res.send({
+                            message: "Não foi possível logar!"
+                        })
+                    }
+                }
+                else {
+                    res.send({
+                        message: "Não foi possível logar!"
+                    })
+                }
+            }
+        )
     })
 
 // Roda o servidor na porta 3080
