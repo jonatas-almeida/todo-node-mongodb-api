@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const esj = require("ejs");
 const bodyParser = require("body-parser");
 const schema = require("./src/schemas/todo-schema");
+const userSchema = require("./src/schemas/user-schema")
 
 const responseModel = require("./src/util/response-status");
 
@@ -18,6 +19,7 @@ mongoose.connect("mongodb://localhost:27017/TodoDB");
 
 // Cria a collection "activities"
 const Activity = mongoose.model("Activity", schema.todoSchemas);
+const User = mongoose.model("User", userSchema.userSchemas);
 
 /** --- Endpoints gerais --- */
 app.route("/todo")
@@ -104,7 +106,7 @@ app.route("/todo/:activityName")
     // Atualiza uma atividade específica
     .patch(function(req, res) {
         Activity.updateOne(
-            { activity_title: req.params.activityName },
+            { _id: req.params.activityName },
             { $set: req.body },
             function(err) {
                 if(!err) {
@@ -126,7 +128,7 @@ app.route("/todo/:activityName")
     // Deleta uma atividade específica
     .delete(function(req, res) {
         Activity.deleteOne(
-            { activity_title: req.params.activityName },
+            { _id: req.params.activityName },
             function(err) {
                 if(!err) {
                     res.send({
@@ -142,6 +144,34 @@ app.route("/todo/:activityName")
                 }
             }
         )
+    });
+
+/** End ----------- To Do Enpoints */
+
+/** User endpoints */
+app.route("/user")
+    .post(function(req, res) {
+        const newUser = new User({
+            username: req.body.username,
+            user_email: req.body.user_email,
+            user_password: req.body.user_password
+        })
+
+        newUser.save(function(err) {
+            if(!err) {
+                res.send({
+                    message: "Cadastrado com sucesso!",
+                    status: responseModel.responseStatus.success.response_status
+                })
+            }
+            else {
+                res.send({
+                    message: "Não foi possível cadastrar!",
+                    status: responseModel.responseStatus.failure.response_status
+                })
+            }
+        })
+
     })
 
 // Roda o servidor na porta 3080
