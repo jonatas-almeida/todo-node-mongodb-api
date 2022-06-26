@@ -5,6 +5,7 @@ const schema = require("./src/schemas/todo-schema");
 const userSchema = require("./src/schemas/user-schema")
 const bcrypt = require("bcrypt");
 const jwt = require('jsonwebtoken');
+const jwt_decode = require('jwt-decode');
 
 const responseModel = require("./src/util/response-status");
 const cors = require('cors')
@@ -47,7 +48,9 @@ app.route("/todo")
 
     // Retorna todas as atividades de um determinado usuário
     .post(function (req, res) {
-        Activity.find({ user: req.body.user }, { user: 0 }, function (err, result) {
+        const token_user = jwt_decode(req.body.token)
+
+        Activity.find({ user: token_user.user_name }, { user: 0 }, function (err, result) {
             if (!err) {
                 res.send({
                     data: result,
@@ -106,8 +109,10 @@ app.route("/todo/:activityName")
 
     /** Futuramente implementar busca com filtros */
     .post(function (req, res) {
+        const token_user = jwt_decode(req.body.token)
+
         Activity.findOne(
-            { activity_title: req.params.activityName, user: req.body.user }, { user: 0 },
+            { activity_title: req.params.activityName, user: token_user.user_name }, { user: 0 },
             function (err, result) {
                 if (!err) {
                     res.send({
@@ -129,8 +134,10 @@ app.route("/todo/:activityName")
 
     // Atualiza uma atividade específica
     .patch(function (req, res) {
+        const token_user = jwt_decode(req.body.token)
+
         Activity.updateOne(
-            { _id: req.params.activityName, user: req.body.user },
+            { _id: req.params.activityName, user: token_user.user_name },
             { $set: req.body },
             function (err) {
                 if (!err) {
