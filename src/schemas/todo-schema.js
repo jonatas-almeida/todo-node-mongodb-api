@@ -8,6 +8,10 @@ const todoSchemas = new mongoose.Schema({
     activity_description: {
         type: String,
         required: [true, "A atividade necessita de uma descrição"]
+    },
+    user: {
+        type: String,
+        required: [true, "Um usuário precisa ser especificado"]
     }
 });
 
