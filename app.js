@@ -1,6 +1,5 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const esj = require("ejs");
 const bodyParser = require("body-parser");
 const schema = require("./src/schemas/todo-schema");
 const userSchema = require("./src/schemas/user-schema")
