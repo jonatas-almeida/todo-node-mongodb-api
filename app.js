@@ -3,6 +3,8 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const schema = require("./src/schemas/todo-schema");
 const userSchema = require("./src/schemas/user-schema")
+const bcrypt = require("bcrypt");
+const jwt = require('jsonwebtoken');
 
 const responseModel = require("./src/util/response-status");
 const cors = require('cors')
@@ -199,33 +201,44 @@ app.route("/register")
     });
 
 app.route("/login")
-    .post(function (req, res) {
+    .post(function (req, response) {
+
         const username = req.body.username;
         const user_password = req.body.user_password;
 
-        User.findOne(
-            { username: username },
-            function (err, result) {
-                if (result && !err) {
-                    if (result.username && (result.user_password === user_password)) {
-                        res.send({
-                            message: "Logado com sucesso!",
-                            status: "success"
+        try {
+            User.findOne(
+                { username: username },
+                function (err, result) {
+                    if (result && !err) {
+                        bcrypt.compare(user_password, result.user_password, function (err, res) {
+                            if ((result.username === req.body.username) && res) {
+
+                                const tokenInfo = { id: result.id, user_name: result.username }
+                                 // Generates token
+                                const token = jwt.sign(tokenInfo, "SecReT");
+
+                                response.send({
+                                    token: token,
+                                    message: "Logado com sucesso!",
+                                    status: "success"
+                                })
+                            }
+                            else {
+                                response.send({
+                                    message: "Não foi possível logar!"
+                                })
+                            }
                         })
                     }
                     else {
-                        res.send({
-                            message: "Não foi possível logar!"
-                        })
+                        console.log("Não foi possível fazer o login")
                     }
                 }
-                else {
-                    res.send({
-                        message: "Não foi possível logar!"
-                    })
-                }
-            }
-        )
+            )
+        } catch (error) {
+            console.log(error)
+        }
     })
 
 // Roda o servidor na porta 3080
