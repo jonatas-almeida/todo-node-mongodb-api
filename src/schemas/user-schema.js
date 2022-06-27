@@ -9,6 +9,10 @@ const userSchemas = new mongoose.Schema({
         type: String,
         required: [true, "O e-mail é obrigatório"]
     },
+    user_full_name: {
+        type: String,
+        required: [true, "O nome completo é obrigatório"]
+    },
     user_password: {
         type: String,
         required: [true, "A senha é obrigatório"]

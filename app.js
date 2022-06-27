@@ -187,6 +187,7 @@ app.route("/register")
         const newUser = new User({
             username: req.body.username,
             user_email: req.body.user_email,
+            user_full_name: req.body.user_full_name,
             user_password: req.body.user_password
         })
 
@@ -221,7 +222,7 @@ app.route("/login")
                         bcrypt.compare(user_password, result.user_password, function (err, res) {
                             if ((result.username === req.body.username) && res) {
 
-                                const tokenInfo = { id: result.id, user_name: result.username }
+                                const tokenInfo = { id: result.id, user_name: result.username, user_full_name: result.user_full_name }
                                  // Generates token
                                 const token = jwt.sign(tokenInfo, "SecReT");
 
@@ -239,7 +240,10 @@ app.route("/login")
                         })
                     }
                     else {
-                        console.log("Não foi possível fazer o login")
+                        response.send({
+                            message: "Não foi possível fazer o login",
+                            status: "failed"
+                        })
                     }
                 }
             )
