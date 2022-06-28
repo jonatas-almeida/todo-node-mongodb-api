@@ -43,6 +43,11 @@ mongoose.connect("mongodb://localhost:27017/TodoDB");
 const Activity = mongoose.model("Activity", schema.todoSchemas);
 const User = mongoose.model("User", userSchema.userSchemas);
 
+/**
+ * CRIAR O ENVIO DO TOKEN DE AUTENTICAÇÃO DO USUÁRIO NO HEADER DA REQUISIÇÃO,
+ * E USAR PARA CAPTURAR O TOKEN E VALIDAR AS INFORMAÇÕES DE USUÁRIO E USÁ-LAS
+ */
+
 /** --- Endpoints gerais --- */
 app.route("/todo")
 
@@ -80,11 +85,14 @@ app.route("/todo")
 
 app.route("/todo/new_activity")// Cria uma nova atividade
     .post(function (req, res) {
+
+        const token_user = jwt_decode(req.body.token)
+
         if (req.body) {
             const newActivity = new Activity({
                 activity_title: req.body.activity_title,
                 activity_description: req.body.activity_description,
-                user: req.body.user
+                user: token_user.user_name
             })
 
             // Salva no banco
