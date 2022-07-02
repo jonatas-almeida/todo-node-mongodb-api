@@ -293,6 +293,37 @@ app.route("/todo/:activity_name")
 /** End ----------- To Do Enpoints */
 
 
+// Search for an existing username
+app.get('/todo/search_username/:username', function(req, res) {
+
+    const userName =  req.params.username;
+    
+    if(userName) {
+        User.find({ username: userName }, function(err, result) {
+            if(err) {
+                res.send({
+                    error: "É necessário um nome de usuário para a verificação"
+                })
+            }
+            else {
+                if(result.length > 0) {
+                    res.send({
+                        message: "Nome de usuário já existe!",
+                        available: false
+                    })
+                }
+                else {
+                    res.send({
+                        message: "Nome de usuário disponível!",
+                        available: true
+                    })
+                }
+            }
+        })
+    }
+
+})
+
 /** User endpoints */
 app.route("/register")
 
