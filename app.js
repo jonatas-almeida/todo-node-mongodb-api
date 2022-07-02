@@ -12,23 +12,7 @@ const cors = require('cors')
 
 const app = express()
 
-const corsOpts = {
-    origin: '*',
-
-    methods: [
-        'GET',
-        'POST',
-        'PUT',
-        'PATCH',
-        'DELETE'
-    ],
-
-    allowedHeaders: [
-        'Content-Type',
-    ],
-};
-
-app.use(cors(corsOpts));
+app.use(cors());
 
 app.set("view engine", "ejs");
 app.use(bodyParser.urlencoded({
@@ -52,25 +36,45 @@ const User = mongoose.model("User", userSchema.userSchemas);
 app.route("/todo")
 
     // Retorna todas as atividades de um determinado usuário
-    .post(function (req, res) {
-        const token_user = jwt_decode(req.body.token)
+    .get(function (req, res) {
+        let userToken;
 
-        Activity.find({ user: token_user.user_name }, { user: 0 }, function (err, result) {
-            if (!err) {
-                res.send({
-                    data: result,
-                    message: responseModel.responseStatus.success.get_response_message,
-                    status: responseModel.responseStatus.success.response_status
-                })
+        const tokenHeader = req.headers.authorization;
+        if(tokenHeader) {
+            const onlyToken = tokenHeader.split(' ')[1]
+            userToken = onlyToken.toString();
+
+            try {
+                const decoded_token = jwt.verify(userToken, 'SecReT')
+
+                if(decoded_token) {
+                    Activity.find({ user: decoded_token.user_name }, { user: 0 }, function (err, result) {
+                        if (!err) {
+                            res.send({
+                                data: result,
+                                message: responseModel.responseStatus.success.get_response_message,
+                                status: responseModel.responseStatus.success.response_status
+                            })
+                        }
+                        else {
+                            res.send({
+                                data: [],
+                                message: responseModel.responseStatus.failure.get_response_message,
+                                status: responseModel.responseStatus.failure.response_status
+                            })
+                        }
+                    })
+                }
+                else {
+                    res.send({
+                        error: res.statusCode,
+                        message: responseModel.responseStatus.failure.response_status
+                    })
+                }
+            } catch (error) {
+                console.log(error)
             }
-            else {
-                res.send({
-                    data: [],
-                    message: responseModel.responseStatus.failure.get_response_message,
-                    status: responseModel.responseStatus.failure.response_status
-                })
-            }
-        })
+        }
     })
 
     // Deleta todas as atividades
