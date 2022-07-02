@@ -27,28 +27,27 @@ mongoose.connect("mongodb://localhost:27017/TodoDB");
 const Activity = mongoose.model("Activity", schema.todoSchemas);
 const User = mongoose.model("User", userSchema.userSchemas);
 
+let userToken;
+
 /**
  * CRIAR O ENVIO DO TOKEN DE AUTENTICAÇÃO DO USUÁRIO NO HEADER DA REQUISIÇÃO,
  * E USAR PARA CAPTURAR O TOKEN E VALIDAR AS INFORMAÇÕES DE USUÁRIO E USÁ-LAS
  */
-
 /** --- Endpoints gerais --- */
 app.route("/todo")
 
     // Retorna todas as atividades de um determinado usuário
     .get(function (req, res) {
-        let userToken;
-
         const tokenHeader = req.headers.authorization;
-        if(tokenHeader) {
-            const onlyToken = tokenHeader.split(' ')[1]
-            userToken = onlyToken.toString();
+
+        if (tokenHeader) {
+            userToken = tokenHeader.split(' ')[1].toString();
+
+            const tokenVerified = jwt.verify(userToken, 'SecReT')
 
             try {
-                const decoded_token = jwt.verify(userToken, 'SecReT')
-
-                if(decoded_token) {
-                    Activity.find({ user: decoded_token.user_name }, { user: 0 }, function (err, result) {
+                if (tokenVerified) {
+                    Activity.find({ user: tokenVerified.user_name }, { user: 0 }, function (err, result) {
                         if (!err) {
                             res.send({
                                 data: result,
@@ -79,39 +78,74 @@ app.route("/todo")
 
     // Deleta todas as atividades
     .delete(function (req, res) {
-        Activity.deleteMany(() => {
-            res.send({
-                message: responseModel.responseStatus.success.delete_all_response_message,
-                status: responseModel.responseStatus.success.response_status
-            })
-        })
+        const tokenHeader = req.headers.authorization;
+
+        if (tokenHeader) {
+            userToken = tokenHeader.split(' ')[1].toString()
+
+            const tokenVerified = jwt.verify(userToken, 'SecRet')
+
+            if (tokenVerified) {
+                try {
+                    Activity.deleteMany(() => {
+                        res.send({
+                            message: responseModel.responseStatus.success.delete_all_response_message,
+                            status: responseModel.responseStatus.success.response_status
+                        })
+                    })
+                } catch (error) {
+                    console.log(error)
+                }
+            }
+        }
     });
 
 app.route("/todo/new_activity")// Cria uma nova atividade
     .post(function (req, res) {
 
-        const token_user = jwt_decode(req.body.token)
+        const tokenHeader = req.headers.authorization;
 
-        if (req.body) {
-            const newActivity = new Activity({
-                activity_title: req.body.activity_title,
-                activity_description: req.body.activity_description,
-                user: token_user.user_name
-            })
+        if (tokenHeader) {
+            try {
+                userToken = tokenHeader.split(' ')[1].toString();
 
-            // Salva no banco
-            newActivity.save();
+                const tokenVerified = jwt.verify(userToken, 'SecReT')
 
-            res.send({
-                message: responseModel.responseStatus.success.post_response_message,
-                status: responseModel.responseStatus.success.response_status
-            })
-        }
-        else {
-            res.send({
-                message: responseModel.responseStatus.failure.post_response_message,
-                status: responseModel.responseStatus.failure.response_status
-            })
+                if (tokenVerified) {
+                    if (req.body) {
+                        const newActivity = new Activity({
+                            activity_title: req.body.activity_title,
+                            activity_description: req.body.activity_description,
+                            user: tokenVerified.user_name
+                        })
+
+                        // Salva no banco
+                        newActivity.save();
+
+                        res.send({
+                            message: responseModel.responseStatus.success.post_response_message,
+                            status: responseModel.responseStatus.success.response_status
+                        })
+                    }
+                    else {
+                        res.send({
+                            message: responseModel.responseStatus.failure.post_response_message,
+                            status: responseModel.responseStatus.failure.response_status
+                        })
+                    }
+                }
+                else {
+                    res.send({
+                        error: res.statusCode,
+                        message: responseModel.responseStatus.failure.post_response_message,
+                        status: responseModel.responseStatus.failure.response_status
+                    })
+                }
+            } catch (error) {
+                res.send({
+                    error: res.statusCode
+                })
+            }
         }
     })
 
@@ -120,73 +154,140 @@ app.route("/todo/:activity_name")
     // Get para uma atividade específica
 
     /** Futuramente implementar busca com filtros */
-    .post(function (req, res) {
-        const token_user = jwt_decode(req.body.token)
+    .get(function (req, res) {
+        const tokenHeader = req.headers.authorization;
 
-        Activity.find(
-            { activity_title: req.params.activity_name, user: token_user.user_name }, { user: 0 },
-            function (err, result) {
-                if (!err) {
-                    res.send({
-                        data: result,
-                        message: responseModel.responseStatus.success.get_response_message,
-                        status: responseModel.responseStatus.success.response_status
-                    })
-                }
-                else {
-                    res.send({
-                        data: [],
-                        message: responseModel.responseStatus.failure.get_response_message,
-                        status: responseModel.responseStatus.failure.response_status
-                    })
-                }
+        try {
+            userToken = tokenHeader.split(' ')[1].toString();
+
+            const tokenVerified = jwt.verify(userToken, 'SecReT')
+
+            if (tokenVerified) {
+                Activity.find(
+                    { activity_title: req.params.activity_name, user: tokenVerified.user_name }, { user: 0 },
+                    function (err, result) {
+                        if (!err) {
+                            res.send({
+                                data: result,
+                                message: responseModel.responseStatus.success.get_response_message,
+                                status: responseModel.responseStatus.success.response_status
+                            })
+                        }
+                        else {
+                            res.send({
+                                data: [],
+                                message: responseModel.responseStatus.failure.get_response_message,
+                                status: responseModel.responseStatus.failure.response_status
+                            })
+                        }
+                    }
+                )
             }
-        )
+            else {
+                res.send({
+                    error: res.statusCode,
+                    message: 'Not allowed!'
+                })
+            }
+        } catch (error) {
+            res.send({
+                error: res.statusCode,
+                message: error
+            })
+        }
     })
 
     // Atualiza uma atividade específica
     .patch(function (req, res) {
-        const token_user = jwt_decode(req.body.token)
+        const tokenHeader = req.headers.authorization;
 
-        Activity.updateOne(
-            { _id: req.params.activity_name, user: token_user.user_name },
-            { $set: req.body },
-            function (err) {
-                if (!err) {
+        if (tokenHeader) {
+            userToken = tokenHeader.split(' ')[1].toString();
+
+            const tokenVerified = jwt.verify(tokenHeader, 'SecRet');
+
+            if (tokenVerified) {
+                try {
+                    Activity.updateOne(
+                        { _id: req.params.activity_name, user: tokenVerified.user_name },
+                        { $set: req.body },
+                        function (err) {
+                            if (!err) {
+                                res.send({
+                                    message: responseModel.responseStatus.success.put_response_message,
+                                    status: responseModel.responseStatus.success.response_status
+                                })
+                            }
+                            else {
+                                res.send({
+                                    message: responseModel.responseStatus.failure.put_response_message,
+                                    status: responseModel.responseStatus.failure.response_status
+                                })
+                            }
+                        }
+                    )
+                } catch (error) {
                     res.send({
-                        message: responseModel.responseStatus.success.put_response_message,
-                        status: responseModel.responseStatus.success.response_status
-                    })
-                }
-                else {
-                    res.send({
-                        message: responseModel.responseStatus.failure.put_response_message,
-                        status: responseModel.responseStatus.failure.response_status
+                        error: res.statusCode,
+                        message: error
                     })
                 }
             }
-        )
+            else {
+                res.send({
+                    error: res.statusCode
+                })
+            }
+        }
     })
 
     // Deleta uma atividade específica
     .delete(function (req, res) {
-        Activity.deleteOne(
-            { _id: req.params.activity_name },
-            function (err) {
-                if (!err) {
+
+        const tokenHeader = req.headers.authorization;
+
+        if (tokenHeader) {
+            userToken = tokenHeader.split(' ')[1].toString();
+
+            const tokenVerified = jwt.verify(userToken, 'SecRet');
+
+            if (tokenVerified) {
+                try {
+                    Activity.deleteOne(
+                        { _id: req.params.activity_name },
+                        function (err) {
+                            if (!err) {
+                                res.send({
+                                    message: responseModel.responseStatus.success.delete_response_message,
+                                    status: responseModel.responseStatus.success.response_status
+                                })
+                            }
+                            else {
+                                res.send({
+                                    message: responseModel.responseStatus.failure.delete_response_message,
+                                    status: responseModel.responseStatus.failure.response_status
+                                })
+                            }
+                        }
+                    )
+                } catch (error) {
                     res.send({
-                        message: responseModel.responseStatus.success.delete_response_message,
-                        status: responseModel.responseStatus.success.response_status
-                    })
-                }
-                else {
-                    res.send({
-                        message: responseModel.responseStatus.failure.delete_response_message,
-                        status: responseModel.responseStatus.failure.response_status
+                        error: res.statusCode,
+                        message: error
                     })
                 }
             }
-        )
+            else {
+                res.send({
+                    error: res.statusCode
+                })
+            }
+        }
+        else {
+            res.send({
+                message: 'Not allowed!' + res.statusCode
+            })
+        }
     });
 
 /** End ----------- To Do Enpoints */
@@ -235,8 +336,11 @@ app.route("/login")
                             if ((result.username === req.body.username) && res) {
 
                                 const tokenInfo = { id: result.id, user_name: result.username, user_full_name: result.user_full_name }
-                                 // Generates token
+                                // Generates token
                                 const token = jwt.sign(tokenInfo, "SecReT");
+
+                                // Populates token when logged in
+                                userToken = token;
 
                                 response.send({
                                     token: token,
