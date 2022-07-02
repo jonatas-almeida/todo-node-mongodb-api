@@ -112,15 +112,15 @@ app.route("/todo/new_activity")// Cria uma nova atividade
     })
 
 /** --- Endpoints para atividades específicas --- */
-app.route("/todo/:activityName")
+app.route("/todo/:activity_name")
     // Get para uma atividade específica
 
     /** Futuramente implementar busca com filtros */
     .post(function (req, res) {
         const token_user = jwt_decode(req.body.token)
 
-        Activity.findOne(
-            { activity_title: req.params.activityName, user: token_user.user_name }, { user: 0 },
+        Activity.find(
+            { activity_title: req.params.activity_name, user: token_user.user_name }, { user: 0 },
             function (err, result) {
                 if (!err) {
                     res.send({
@@ -145,7 +145,7 @@ app.route("/todo/:activityName")
         const token_user = jwt_decode(req.body.token)
 
         Activity.updateOne(
-            { _id: req.params.activityName, user: token_user.user_name },
+            { _id: req.params.activity_name, user: token_user.user_name },
             { $set: req.body },
             function (err) {
                 if (!err) {
@@ -167,7 +167,7 @@ app.route("/todo/:activityName")
     // Deleta uma atividade específica
     .delete(function (req, res) {
         Activity.deleteOne(
-            { _id: req.params.activityName },
+            { _id: req.params.activity_name },
             function (err) {
                 if (!err) {
                     res.send({
