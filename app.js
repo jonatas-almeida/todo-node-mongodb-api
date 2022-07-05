@@ -83,7 +83,7 @@ app.route("/todo")
         if (tokenHeader) {
             userToken = tokenHeader.split(' ')[1].toString()
 
-            const tokenVerified = jwt.verify(userToken, 'SecRet')
+            const tokenVerified = jwt.verify(userToken, 'SecReT')
 
             if (tokenVerified) {
                 try {
@@ -204,7 +204,8 @@ app.route("/todo/:activity_name")
         if (tokenHeader) {
             userToken = tokenHeader.split(' ')[1].toString();
 
-            const tokenVerified = jwt.verify(tokenHeader, 'SecRet');
+            const tokenVerified = jwt.verify(userToken, 'SecReT');
+
 
             if (tokenVerified) {
                 try {
@@ -249,7 +250,7 @@ app.route("/todo/:activity_name")
         if (tokenHeader) {
             userToken = tokenHeader.split(' ')[1].toString();
 
-            const tokenVerified = jwt.verify(userToken, 'SecRet');
+            const tokenVerified = jwt.verify(userToken, 'SecReT');
 
             if (tokenVerified) {
                 try {
@@ -294,19 +295,19 @@ app.route("/todo/:activity_name")
 
 
 // Search for an existing username
-app.get('/todo/search_username/:username', function(req, res) {
+app.get('/todo/search_username/:username', function (req, res) {
 
-    const userName =  req.params.username;
-    
-    if(userName) {
-        User.find({ username: userName }, function(err, result) {
-            if(err) {
+    const userName = req.params.username;
+
+    if (userName) {
+        User.find({ username: userName }, function (err, result) {
+            if (err) {
                 res.send({
                     error: "É necessário um nome de usuário para a verificação"
                 })
             }
             else {
-                if(result.length > 0) {
+                if (result.length > 0) {
                     res.send({
                         message: "Nome de usuário já existe!",
                         available: false
